@@ -7,6 +7,13 @@ between them.
 import numpy as np
 import pandas as pd
 
+# Set the data for training
+DATA = [[0, 0, 0],
+        [0, 1, 1],
+        [1, 0, 1],
+        [1, 1, 1],
+        ]
+
 
 def SetUp(initial):
     """Prepare the neccesary elements."""

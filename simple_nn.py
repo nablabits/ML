@@ -15,27 +15,25 @@ DATA = [[0, 0, 0],
         ]
 
 
-def SetUp(initial):
+def SetUp(initial=DATA[1]):
     """Prepare the neccesary elements."""
-    # Initial should be either 0 or 1 and contain 2 elements
-    if len(initial) != 2:
-        raise ValueError('For this network only two inputs are allowed')
-    if initial[0] not in (0, 1) or initial[1] not in (0, 1):
-        raise ValueError('The inputs should be either 0 or 1')
+    if initial not in DATA:
+        raise ValueError('The inital data is not in DATA')
 
     # Set random initial weights
     mlw = np.random.random((3, 2))
-    olw = np.random.random((3, 2))
+    olw = np.random.random(3)
 
     # Build the initial vector
-    initial = [[initial[0], initial[1], ],
-               [initial[0], initial[1], ],
-               [initial[0], initial[1], ],
-               ]
+    v = [[initial[0], initial[1], ],
+         [initial[0], initial[1], ],
+         [initial[0], initial[1], ],
+         ]
 
-    data = {'init': [initial, ],  # initial input
-            'MLW': [mlw, ], 'MO': [np.zeros(3)],  # Middle layer
+    data = {'init': [v, ],  # initial input
+            'MLW': [mlw, ], 'MS': [np.zeros(3)],  # Middle layer
             'OWL': [olw, ], 'OS': [np.zeros(1)],  # Output layer
+            'Expected': initial[2],
             'Error': np.nan, }
 
     return pd.DataFrame(data=data)

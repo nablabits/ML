@@ -68,7 +68,7 @@ class Train:
 
     def E(self, yhat, sigma):
         """Compute the error function."""
-        return 0.5 * (yhat - sigma)
+        return 0.5 * (yhat - sigma)**2
 
     def forward(self, df):
         """Fill forward the missing values in the df."""

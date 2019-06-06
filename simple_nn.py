@@ -1,6 +1,6 @@
-"""Create from scratch a simple neural network to find out logical or.
+"""Create from scratch a simple neural network to find out logical OR.
 
-It will take two values either, 0 or 1, and try to predict the or clause
+It will take two values either, 0 or 1, and try to predict the OR clause
 between them.
 """
 
@@ -30,9 +30,21 @@ def SetUp(initial=DATA[1]):
          [initial[0], initial[1], ],
          ]
 
+    """Understanding the columns:
+        init: th initial vector prepared to to be injected in the three neurons
+        of the medium layer.
+        MLW: medium layer weights.
+        MS: medium layer sigma, output for the first layer.
+        OWL: output layer weights.
+        OS: output sigma, final output
+        Expected: expected value, yhat.
+        Error: deviation from the expected value.
+        Pass: informs about the direction of the training.
+    """
+
     data = {'init': [v, ],  # initial input
             'MLW': [mlw, ], 'MS': [np.zeros(3)],  # Middle layer
-            'OWL': [olw, ], 'OS': [np.zeros(1)],  # Output layer
+            'OLW': [olw, ], 'OS': [np.zeros(1)],  # Output layer
             'Expected': initial[2],
             'Error': np.nan, }
 
@@ -55,7 +67,7 @@ class Train:
         return 0.5 * (yhat - sigma)
 
     def forward(self, df):
-        """Fill the nan values in the df."""
+        """Fill forward the missing values in the df."""
         # fill the mid layer outputs
         ms = list()
         for c, val in enumerate(df.iloc[-1, 0]):

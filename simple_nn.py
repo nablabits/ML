@@ -58,6 +58,10 @@ class Train:
         """Require the weights df."""
         self.df = df
 
+    def z(self, x, w):
+        """Compute the value for z."""
+        return np.dot(x, w)
+
     def sigma(self, z):
         """Compute the sigmoid activation function."""
         return 1 / (1 + np.exp(-z))
@@ -71,12 +75,12 @@ class Train:
         # fill the mid layer outputs
         ms = list()
         for c, val in enumerate(df.iloc[-1, 0]):
-            z = np.dot(val, df.iloc[-1, 1][c])
+            z = self.z(val, df.iloc[-1, 1][c])
             ms.append(self.sigma(z))
         df.at[len(df) - 1, 'MS'] = ms
 
         # Compute final output
-        z = np.dot(df.iloc[-1, 2], df.iloc[-1, 3])
+        z = self.z(df.iloc[-1, 2], df.iloc[-1, 3])
         df.at[len(df) - 1, 'OS'] = self.sigma(z)
 
         # And the error

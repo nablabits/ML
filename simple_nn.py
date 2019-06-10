@@ -7,7 +7,7 @@ between them.
 import numpy as np
 import pandas as pd
 
-# Set the data for training
+# Set the data for training. Inputs 1 & 2 and expected result
 DATA = [[0, 0, 0],
         [0, 1, 1],
         [1, 0, 1],
@@ -19,10 +19,6 @@ def SetUp(initial=DATA[1]):
     """Prepare the neccesary elements."""
     if initial not in DATA:
         raise ValueError('The inital data is not in DATA')
-
-    # Set random initial weights
-    mlw = np.random.random((3, 2))
-    olw = np.random.random(3)
 
     # Build the initial vector
     v = [[initial[0], initial[1], ],
@@ -40,7 +36,6 @@ def SetUp(initial=DATA[1]):
         MLS: medium layer sigma, output for the first layer.
 
         # Output Layer
-        OLX: output layer x, a properly vectorized version of MLS.
         OLW: output layer weights.
         OLZ: The input for the neuron in the output layer.
         OLS: output sigma, final output
@@ -57,13 +52,30 @@ def SetUp(initial=DATA[1]):
 
     """
 
-    data = {'init': [v, ],  # initial input
-            'MLW': [mlw, ], 'MS': [np.zeros(3)],  # Middle layer
-            'OLW': [olw, ], 'OS': [np.zeros(1)],  # Output layer
-            'Expected': initial[2],
-            'Error': np.nan, }
+    data = {'raw': [np.array([initial[0], initial[1]])],
+            # Mid layer
+            'MLX': [np.array(v)],
+            'MLW': [np.random.random((3, 2))],
+            'MLZ': [np.zeros(3)],
+            'MLS': [np.zeros(3)],
 
-    return pd.DataFrame(data=data)
+            # Output layer
+            'OLW': [np.random.random(3)],
+            'OLZ': np.zeros(1),
+            'OLS': np.zeros(1),
+            'Expected': initial[2],
+            'E': np.zeros(1),
+
+            # Backpropagation
+            'dE_dOLS': np.zeros(1),
+            'dOLS_dOLZ': np.zeros(1),
+            'dE_dOLW': [np.zeros(3)],
+            'dOLZ_dMLS': [np.zeros(3)],
+            'dOLX_dMLZ': [np.zeros(3)],
+            'dE_dMLW': [np.zeros((3, 2))]
+            }
+
+    return pd.DataFrame(data)
 
 
 class Train:

@@ -100,17 +100,23 @@ class Train:
     def forward(self, df):
         """Fill forward the missing values in the df."""
         # fill the mid layer outputs
-        ms = list()
-        for c, val in enumerate(df.iloc[-1, 0]):
-            z = self.z(val, df.iloc[-1, 1][c])
-            ms.append(self.sigma(z))
-        df.at[len(df) - 1, 'MS'] = ms
+        c_row = len(df) - 1
+        mlz, mls = list(), list()
+        for c, val in enumerate(df.loc[c_row, 'MLX']):
+            z = self.z(val, df.loc[c_row, 'MLW'][c])
+            mlz.append(z)
+            mls.append(self.sigma(z))
+        df.at[c_row, 'MLZ'], df.at[c_row, 'MLS'] = mlz, mls
 
-        # Compute final output
-        z = self.z(df.iloc[-1, 2], df.iloc[-1, 3])
-        df.at[len(df) - 1, 'OS'] = self.sigma(z)
+        # Fill out the output layer
+        z = self.z(df.loc[c_row, 'MLS'], df.loc[c_row, 'OLW'])
+        df.at[c_row, 'OLS'] = self.sigma(z)
 
         # And the error
+        yhat, sigma = df.loc[c_row, 'Expected'], df.loc[c_row, 'OLS']
+        df.at[c_row, 'E'] = self.E(yhat, sigma)
+
+        return df
         yhat, sigma = df.iloc[-1, 5], df.iloc[-1, 4]
         df.at[len(df) - 1, 'Error'] = self.E(yhat, sigma)
 

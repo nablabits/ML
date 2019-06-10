@@ -30,16 +30,31 @@ def SetUp(initial=DATA[1]):
          [initial[0], initial[1], ],
          ]
 
-    """Understanding the columns:
-        init: th initial vector prepared to to be injected in the three neurons
-        of the medium layer.
+    """Forward propagation:
+        raw: the initial data as 2 element list.
+
+        # Mid Layer
+        MLX: medium layer x, the initial data vectorized ready to be injected.
         MLW: medium layer weights.
-        MS: medium layer sigma, output for the first layer.
-        OWL: output layer weights.
-        OS: output sigma, final output
+        MLZ: The input for the neuron in the mid layer
+        MLS: medium layer sigma, output for the first layer.
+
+        # Output Layer
+        OLX: output layer x, a properly vectorized version of MLS.
+        OLW: output layer weights.
+        OLZ: The input for the neuron in the output layer.
+        OLS: output sigma, final output
         Expected: expected value, yhat.
         Error: deviation from the expected value.
-        Pass: informs about the direction of the training.
+
+       Backpropagation:
+        dE_dOLS: change in the error w/ respect to the last neuron output.
+        dOLS_dOLZ: change in last neuron output w/ respect to its input.
+        dE_dOLW: change in the error w/ respect to the output layer weights.
+        dOLZ_dMLS: change in the output layer input w/ respect to its input.
+        dOLX_dMLZ: change in the middle layer output w/ respect to its input.
+        dE_dMLW: change in the error w/ respect to the mid layer weights.
+
     """
 
     data = {'init': [v, ],  # initial input

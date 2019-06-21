@@ -52,7 +52,7 @@ def SetUp():
         dOLS_dOLZ: change in last neuron output w/ respect to its input.
         dE_dOLW: change in the error w/ respect to the output layer weights.
         dOLZ_dMLS: change in the output layer input w/ respect to its input.
-        dOLX_dMLZ: change in the middle layer output w/ respect to its input.
+        dMLS_dMLZ: change in the middle layer output w/ respect to its input.
         dE_dMLW: change in the error w/ respect to the mid layer weights.
 
     """
@@ -79,7 +79,7 @@ def SetUp():
             'dOLS_dOLZ': np.zeros(1),
             'dE_dOLW': [np.zeros(3)],
             'dOLZ_dMLS': [np.zeros(3)],
-            'dOLX_dMLZ': [np.zeros(3)],
+            'dMLS_dMLZ': [np.zeros(3)],
             'dE_dMLW': [np.zeros((3, 2))]
             }
 
@@ -125,8 +125,9 @@ class Train:
 
     def forward(self, df):
         """Fill forward the missing values in the df."""
-        # fill the mid layer outputs
-        c_row = len(df) - 1
+        c_row = len(df) - 1  # current row
+
+        # fill the mid layer values
         mlz, mls = list(), list()
         for c, val in enumerate(df.loc[c_row, 'MLX']):
             z = self.z(val, df.loc[c_row, 'MLW'][c])
@@ -136,6 +137,7 @@ class Train:
 
         # Fill out the output layer
         z = self.z(df.loc[c_row, 'MLS'], df.loc[c_row, 'OLW'])
+        df.at[c_row, 'OLZ'] = z
         df.at[c_row, 'OLS'] = self.sigma(z)
 
         # And the error

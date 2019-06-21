@@ -250,3 +250,9 @@ class Train:
             df = self.backpropagation(df)
 
         return df
+
+
+if __name__ == '__main__':
+    df = SetUp()
+    f = Train(df).go()
+    print(f.iloc[-1])

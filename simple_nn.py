@@ -97,6 +97,22 @@ class Train:
         """Compute the error function."""
         return 0.5 * (yhat - sigma)**2
 
+    def partial_E(self, yhat, sigma):
+        """Compute the partial of E with respect to sigma."""
+        return sigma - yhat
+
+    def partial_sigma(self, sigma):
+        """Compute the partial of sigma with respect to z."""
+        return sigma * (1 - sigma)
+
+    def partial_w(self, x):
+        """Compute the partial of w with repect to z."""
+        return x
+
+    def partial_x(self, w):
+        """Compute the partial of x with respect to z."""
+        return w
+
     def forward(self, df):
         """Fill forward the missing values in the df."""
         # fill the mid layer outputs
@@ -122,8 +138,61 @@ class Train:
 
         return df
 
+    def backpropagation(self, df):
+        """Fill out backpropagation values."""
+        c_row = len(df) - 1  # current row
+
+        # fill the error w/ rspct to outer layer output
+        yhat, sigma = df.loc[c_row, ['Expected', 'OLS']]
+        df.at[c_row, 'dE_dOLS'] = self.partial_E(yhat, sigma)
+
+        # outer output w/ rspct to outer input
+        df.at[c_row, 'dOLS_dOLZ'] = self.partial_sigma(sigma)
+
+        # error w/ respect to the outer weight (chain rule)
+        de_dolw = list()
+        de_dols, dols_dolz = df.loc[c_row, ['dE_dOLS', 'dOLS_dOLZ']]
+        c_rule = de_dols * dols_dolz
+        for val in df.loc[c_row, 'MLS']:
+            de_dolw.append(self.partial_w(val) * c_rule)
+        df.at[c_row, 'dE_dOLW'] = de_dolw
+
+        # outer input w/ rspct to mid output
+        dolz_dmls = list()
+        for val in df.loc[c_row, 'OLW']:
+            dolz_dmls.append(self.partial_x(val))
+        df.at[c_row, 'dOLZ_dMLS'] = dolz_dmls
+
+        # mid output w/ rspct to mid input
+        dmls_dmlz = list()
+        for val in df.loc[c_row, 'MLS']:
+            dmls_dmlz.append(self.partial_sigma(val))
+        df.at[c_row, 'dMLS_dMLZ'] = dmls_dmlz
+
+        # error w/ rspct to mid weight (chain rule)
+        de_dmlw = list()
+        dolz_dmls, dmls_dmlz = df.loc[c_row, ['dOLZ_dMLS', 'dMLS_dMLZ']]
+
+        # multiply element wise to get a chain rule vector for the last step
+        c_rule_v = list()
+        for c, val in enumerate(dolz_dmls):
+            c_rule_v.append(c_rule * val * dmls_dmlz[c])
+
+        # finally compute the error
+        de_dmlw_comp = list()
+        for c, vector in enumerate(df.loc[c_row, 'MLX']):
+            c_rule_vc = c_rule_v[c]
+            for comp in vector:
+                de_dmlw_comp.append(self.partial_w(comp) * c_rule_vc)
+            de_dmlw.append(de_dmlw_comp)
+            de_dmlw_comp = list()
+
+        df.at[c_row, 'dE_dMLW'] = de_dmlw
+
+        return df
     def go(self):
         """Launch the training."""
-        f = self.forward(self.df)
+        # First pass
+        df = self.forward(self.df)
+        df = self.backpropagation(df)
 
-        return f

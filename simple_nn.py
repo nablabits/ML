@@ -15,16 +15,21 @@ DATA = [[0, 0, 0],
         ]
 
 
-def SetUp(initial=DATA[1]):
-    """Prepare the neccesary elements."""
-    if initial not in DATA:
-        raise ValueError('The inital data is not in DATA')
+def new_input(data, fix=True):
+    """Create a new input for a training cycle."""
+    v = list()
+    if fix:
+        idx = 1
+    else:
+        idx = np.random.randint(len(data))
+    e = data[idx][2]  # expected value
+    for i in range(len(data) - 1):
+        v.append(list((data[idx][0], data[idx][1])))
+    return (v, e)
 
-    # Build the initial vector
-    v = [[initial[0], initial[1], ],
-         [initial[0], initial[1], ],
-         [initial[0], initial[1], ],
-         ]
+
+def SetUp():
+    """Prepare the neccesary elements."""
 
     """Forward propagation:
         raw: the initial data as 2 element list.
@@ -52,7 +57,10 @@ def SetUp(initial=DATA[1]):
 
     """
 
-    data = {'raw': [np.array([initial[0], initial[1]])],
+    # Build the initial data
+    v, e = new_input(DATA)
+
+    data = {'raw': [np.array([v[0][0], v[0][1]])],
             # Mid layer
             'MLX': [np.array(v)],
             'MLW': [np.random.random((3, 2))],
@@ -63,7 +71,7 @@ def SetUp(initial=DATA[1]):
             'OLW': [np.random.random(3)],
             'OLZ': np.zeros(1),
             'OLS': np.zeros(1),
-            'Expected': initial[2],
+            'Expected': e,
             'E': np.zeros(1),
 
             # Backpropagation
@@ -81,9 +89,11 @@ def SetUp(initial=DATA[1]):
 class Train:
     """Run the network forward to compute the outputs and the error."""
 
-    def __init__(self, df):
+    def __init__(self, df, learning_rate=1, cycles=100):
         """Require the weights df."""
         self.df = df
+        self.lr = learning_rate
+        self.cycles = cycles
 
     def z(self, x, w):
         """Compute the value for z."""
@@ -190,9 +200,51 @@ class Train:
         df.at[c_row, 'dE_dMLW'] = de_dmlw
 
         return df
+
+    def update_weigths(self, df, lr):
+        """Update weigths accordingly."""
+        c_row = len(df) - 1  # current row
+        p_row = len(df) - 2  # Last filled out row
+
+        # Mid layer weights
+        w_bold, w_comp = list(), list()
+        for vector in df.loc[p_row, 'dE_dMLW']:
+            for comp in vector:
+                w_comp.append(comp * -lr)
+            w_bold.append(w_comp)
+            w_comp = list()  # Empty list again
+
+        df.at[c_row, 'MLW'] = np.array(w_bold)
+
+        # Output layer weights
+        w_bold = list()
+        for comp in df.loc[p_row, 'dE_dOLW']:
+            w_bold.append(comp * -lr)
+
+        df.at[c_row, 'OLW'] = np.array(w_bold)
+
+        return df
+
+    def inject(self, df):
+        """Add a new input to be forwarded."""
+        n_row = len(df)  # new row to be created
+        v, e = new_input(DATA)
+        df.at[n_row, 'Expected'] = e
+        df.at[n_row, 'raw'] = np.array([v[0][0], v[0][1]])
+        df.at[n_row, 'MLX'] = np.array(v)
+        return df
+
     def go(self):
         """Launch the training."""
         # First pass
         df = self.forward(self.df)
         df = self.backpropagation(df)
 
+        # Following passes
+        for cycle in range(self.cycles):
+            df = self.inject(df)
+            df = self.update_weigths(df, self.lr)
+            df = self.forward(df)
+            df = self.backpropagation(df)
+
+        return df

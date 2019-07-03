@@ -15,7 +15,7 @@ DATA = [[0, 0, 0],
         ]
 
 
-def new_input(data, fix=True):
+def new_input(data, fix=False):
     """Create a new input for a training cycle."""
     v = list()
     if fix:

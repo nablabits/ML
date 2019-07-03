@@ -186,7 +186,7 @@ class Train:
         for c, val in enumerate(dolz_dmls):
             c_rule_v.append(c_rule * val * dmls_dmlz[c])
 
-        # finally compute the error
+        # finally compute the error w/ rsptc to mid weight
         de_dmlw_comp = list()
         for c, vector in enumerate(df.loc[c_row, 'MLX']):
             c_rule_vc = c_rule_v[c]
@@ -205,21 +205,12 @@ class Train:
         p_row = len(df) - 2  # Last filled out row
 
         # Mid layer weights
-        w_bold, w_comp = list(), list()
-        for vector in df.loc[p_row, 'dE_dMLW']:
-            for comp in vector:
-                w_comp.append(comp * -lr)
-            w_bold.append(w_comp)
-            w_comp = list()  # Empty list again
-
-        df.at[c_row, 'MLW'] = np.array(w_bold)
+        df.at[c_row, 'MLW'] = ((-lr * df.loc[p_row, 'dE_dMLW']) +
+                               df.loc[p_row, 'MLW'])
 
         # Output layer weights
-        w_bold = list()
-        for comp in df.loc[p_row, 'dE_dOLW']:
-            w_bold.append(comp * -lr)
-
-        df.at[c_row, 'OLW'] = np.array(w_bold)
+        df.at[c_row, 'OLW'] = ((-lr * df.loc[p_row, 'dE_dOLW']) +
+                               df.loc[p_row, 'OLW'])
 
         return df
 
@@ -250,5 +241,5 @@ class Train:
 
 if __name__ == '__main__':
     df = SetUp()
-    f = Train(df).go()
+    f = Train(df, cycles=10).go()
     print(f.iloc[-1])

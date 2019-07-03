@@ -145,10 +145,6 @@ class Train:
         df.at[c_row, 'E'] = self.E(yhat, sigma)
 
         return df
-        yhat, sigma = df.iloc[-1, 5], df.iloc[-1, 4]
-        df.at[len(df) - 1, 'Error'] = self.E(yhat, sigma)
-
-        return df
 
     def backpropagation(self, df):
         """Fill out backpropagation values."""

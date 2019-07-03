@@ -163,19 +163,19 @@ class Train:
         c_rule = de_dols * dols_dolz
         for val in df.loc[c_row, 'MLS']:
             de_dolw.append(self.partial_w(val) * c_rule)
-        df.at[c_row, 'dE_dOLW'] = de_dolw
+        df.at[c_row, 'dE_dOLW'] = np.array(de_dolw)
 
         # outer input w/ rspct to mid output
         dolz_dmls = list()
         for val in df.loc[c_row, 'OLW']:
             dolz_dmls.append(self.partial_x(val))
-        df.at[c_row, 'dOLZ_dMLS'] = dolz_dmls
+        df.at[c_row, 'dOLZ_dMLS'] = np.array(dolz_dmls)
 
         # mid output w/ rspct to mid input
         dmls_dmlz = list()
         for val in df.loc[c_row, 'MLS']:
             dmls_dmlz.append(self.partial_sigma(val))
-        df.at[c_row, 'dMLS_dMLZ'] = dmls_dmlz
+        df.at[c_row, 'dMLS_dMLZ'] = np.array(dmls_dmlz)
 
         # error w/ rspct to mid weight (chain rule)
         de_dmlw = list()
@@ -195,7 +195,7 @@ class Train:
             de_dmlw.append(de_dmlw_comp)
             de_dmlw_comp = list()
 
-        df.at[c_row, 'dE_dMLW'] = de_dmlw
+        df.at[c_row, 'dE_dMLW'] = np.array(de_dmlw)
 
         return df
 

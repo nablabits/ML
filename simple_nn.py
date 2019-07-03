@@ -63,7 +63,7 @@ def SetUp():
     data = {'raw': [np.array([v[0][0], v[0][1]])],
             # Mid layer
             'MLX': [np.array(v)],
-            'MLW': [np.random.random((3, 2))],
+            'MLW': [2 * np.random.random_sample((3, 2)) - 1],
             'MLZ': [np.zeros(3)],
             'MLS': [np.zeros(3)],
 

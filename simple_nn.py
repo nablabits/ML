@@ -94,6 +94,8 @@ class Train:
         self.df = df
         self.lr = learning_rate
         self.cycles = cycles
+        print('Trainig model at rate=%s for %s cycles' %
+              (learning_rate, cycles))
 
     def z(self, x, w):
         """Compute the value for z."""
@@ -230,16 +232,50 @@ class Train:
         df = self.backpropagation(df)
 
         # Following passes
+        n = 0
         for cycle in range(self.cycles):
             df = self.inject(df)
             df = self.update_weigths(df, self.lr)
             df = self.forward(df)
             df = self.backpropagation(df)
+            print(n, end='\r')
+            n += 1
 
+        print('{0}, Done!'.format(n))
         return df
+
+
+class Test(Train):
+    """Launch a bunch of tests to check the network performance."""
+
+    def __init__(self, df):
+        """Require the trained df."""
+        self.df = df
+        self.sigma = super().sigma
+
+    def go(self):
+        """Test the truth of the four different values."""
+        l_row = len(self.df) - 1  # last trained row
+        for i in range(len(DATA)):
+            v, e = new_input(idx=i)
+
+            # Get layer weights
+            mlw, olw = self.df.loc[l_row, 'MLW'], self.df.loc[l_row, 'OLW']
+
+            # Compute mid layer
+            mls = list()
+            for c, val in enumerate(v):
+                mls.append(self.sigma(np.dot(val, mlw[c])))
+
+            # Compute outer layer
+            ols = self.sigma(np.dot(mls, olw))
+
+            # Output the outcome
+            print('Testing %s|%s = %s, %s%% match!' %
+                  (v[0][0], v[0][1], e, round(100 - abs(ols - e) * 100, 2)))
 
 
 if __name__ == '__main__':
     df = SetUp()
-    f = Train(df, cycles=10).go()
-    print(f.iloc[-1])
+    df = Train(df, learning_rate=20, cycles=400).go()
+    t = Test(df).go()

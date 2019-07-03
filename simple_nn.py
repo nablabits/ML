@@ -9,21 +9,21 @@ import pandas as pd
 
 # Set the data for training. Inputs 1 & 2 and expected result
 DATA = [[0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
         [0, 1, 1],
         [1, 0, 1],
         [1, 1, 1],
         ]
 
 
-def new_input(data, fix=False):
+def new_input(data=DATA, idx=False):
     """Create a new input for a training cycle."""
     v = list()
-    if fix:
-        idx = 1
-    else:
+    if not idx:
         idx = np.random.randint(len(data))
     e = data[idx][2]  # expected value
-    for i in range(len(data) - 1):
+    for i in range(3):
         v.append(list((data[idx][0], data[idx][1])))
     return (v, e)
 

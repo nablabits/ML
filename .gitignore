@@ -2,3 +2,5 @@ venv/
 tries.ipynb
 .ipynb_checkpoints/
 __pycache__/
+htmlcov
+.coverage

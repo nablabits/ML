@@ -1,0 +1,6 @@
+[run]
+omit =
+  tests.py
+  venv/*
+  .ipynb_checkpoints/*
+  __pycache__/*

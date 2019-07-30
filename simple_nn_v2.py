@@ -82,3 +82,26 @@ class Layer:
             # Finally update the weight
             self.w[n] = self.w[n] + self.delta_w[n]
 
+
+class Gateway(Layer):
+    """The first layer in the hidden layers.
+
+    Gateway layers are special because they clone every input so each neuron
+    receives a copy of them. It also creates the weights accordingly.
+    """
+
+    def __init__(self, x):
+        """Set up a gateway layer."""
+        super().__init__(x, layer_type='gateway')
+        self.x = self._clone_x()
+        self.w = 2 * np.random.random_sample((self.dim, len(x))) - 1
+        self.z = (self.x * self.w).sum(axis=1)
+        self.s = super().solve_fwd()
+
+    def _clone_x(self):
+        """Clone the input for the gateway layer."""
+        x0 = self.x  # keep the initial vector to clone it recursively.
+        for i in range(self.dim - 1):
+            self.x = np.concatenate((self.x, x0))
+        return self.x.reshape((self.dim, len(x0)))
+

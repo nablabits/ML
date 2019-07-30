@@ -105,3 +105,18 @@ class Gateway(Layer):
             self.x = np.concatenate((self.x, x0))
         return self.x.reshape((self.dim, len(x0)))
 
+
+class Output(Layer):
+    """The last layer in the network.
+
+    Output layer combines the outputs in the last hidden layer to spit out a
+    single value as the result of the network.
+    """
+
+    def __init__(self, x):
+        """Set up a output layer."""
+        super().__init__(x, neurons=1, layer_type='output')
+        self.z = np.dot(x, self.w)
+        self.s = super().solve_fwd()
+
+

@@ -121,3 +121,18 @@ class TestGateway(unittest.TestCase):
         self.assertEqual(len(layer.s), layer.dim)
 
 
+class TestOutputLayer(unittest.TestCase):
+    """Test the special output layer."""
+
+    def test_output_is_a_Layer_subclass(self):
+        self.assertIsInstance(Output(np.array([1, 2])), Layer)
+
+    def test_z_is_a_dot_product_between_the_input_and_weight(self):
+        i = np.array([1, 2, 3])
+        layer = Output(i)
+        self.assertTrue((layer.z == np.dot(i, layer.w)).all())
+
+    def test_output_for_output_layer_is_one(self):
+        layer = Output(np.array([1, 2, 3]))
+        self.assertEqual(layer.s.size, 1)
+

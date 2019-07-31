@@ -82,6 +82,79 @@ class TestLayer(unittest.TestCase):
         self.assertIsInstance(layer.delta_w, np.ndarray)
         self.assertTrue((layer.delta_w == 0).all())
 
+    def test_solve_bwd_requires_two_args(self):
+        layer = Layer(np.array([1, 1, 2]))
+        regex = 'missing 1 required positional argument: \'acc_error\''
+        with self.assertRaisesRegex(TypeError, regex):
+            layer.solve_bwd()
+
+    def test_solve_bwd_acc_error_should_be_np_array(self):
+        layer = Layer(np.array([1, 1, 2]))
+        regex = 'The accumulated error should be a numpy array'
+        with self.assertRaisesRegex(TypeError, regex):
+            layer.solve_bwd('void')
+
+    def test_solve_bwd_acc_error_matches_dimension(self):
+        layer = Layer(np.array([1, 1, 2]))
+        regex = 'The accumulated error dimension doesn\'t match!'
+        with self.assertRaisesRegex(ValueError, regex):
+            layer.solve_bwd(np.zeros(5))
+
+    def test_solve_bwd_lr_is_int(self):
+        layer = Layer(np.array([1, 1, 2]))
+        regex = 'Learning rate should be an integer'
+        with self.assertRaisesRegex(TypeError, regex):
+            layer.solve_bwd(np.zeros(3), 'str')
+
+    def test_partial_s_is_the_derivative_of_sigmoid_function(self):
+        layer = Layer(np.array([1, 1, 2]))
+        part_s = layer.s * (1 - layer.s)
+        layer.solve_bwd(np.zeros(3), 5)
+        self.assertTrue((part_s == layer.partial_s).all())
+
+    def test_partial_s_dimension_matches_neuron_qty(self):
+        layer = Layer(np.array([1, 1, 2]))
+        layer.solve_bwd(np.zeros(3), 5)
+        self.assertEqual(len(layer.partial_s), layer.dim)
+
+    def test_error_passed_back_meets_chain_rule(self):
+        layer = Layer(np.array([1, 1, 2]))
+        acc_error = np.array([0.5, 0.5, 0.5])
+        layer.solve_bwd(acc_error, 5)
+        chain_rule = acc_error * layer.partial_s * layer.w
+        self.assertTrue((layer.e == chain_rule).all())
+
+    def test_error_passed_back_matches_neuron_dimension(self):
+        layer = Layer(np.array([1, 1, 2]))
+        layer.solve_bwd(np.zeros(3))
+        self.assertEqual(len(layer.e), layer.dim)
+
+    def test_delta_w_value(self):
+        layer = Layer(np.array([1, 1, 2]))
+        acc_error, lr = np.array([0.5, 0.5, 0.5]), 5
+        layer.solve_bwd(acc_error, lr)
+        expected = -lr * acc_error * layer.partial_s * layer.x
+        self.assertTrue((layer.delta_w == expected).all())
+
+    def test_delta_w_matches_neuron_dimension(self):
+        layer = Layer(np.array([1, 1, 2]))
+        layer.solve_bwd(np.zeros(3))
+        self.assertEqual(len(layer.delta_w), layer.dim)
+
+    def test_update_weights_raises_error_when_delta_is_not_computed(self):
+        layer = Layer(np.array([1, 1, 2]))
+        regex = 'Delta_w is not computed yet'
+        with self.assertRaisesRegex(ValueError, regex):
+            layer.update_weights()
+
+    def test_update_weights(self):
+        layer = Layer(np.array([1, 1, 2]))
+        w0 = layer.w
+        acc_error, lr = np.array([0.5, 0.5, 0.5]), 5
+        layer.solve_bwd(acc_error, lr)
+        layer.update_weights()
+        self.assertTrue((layer.w == (w0 + layer.delta_w)).all())
+
 
 class TestGateway(unittest.TestCase):
     """Test the special gateway layer."""

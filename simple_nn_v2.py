@@ -63,6 +63,7 @@ class Layer:
 
     def solve_bwd(self, acc_error, lr=1):
         """Compute the layer values in the backward pass."""
+        # Check args
         self.not_np(acc_error, 'The accumulated error should be a numpy array')
         if len(acc_error) != self.dim:
             raise ValueError('The accumulated error dimension doesn\'t match!')
@@ -70,17 +71,18 @@ class Layer:
         if not isinstance(lr, int):
             raise TypeError('Learning rate should be an integer')
 
-        for n in range(self.dim):  # Loop over neurons
-            # Calculate the accumulated error
-            partial_s = self.s[n] * (1 - self.s[n])
-            mid = acc_error[n] * partial_s  # intermediate value proxy
-            self.e[n] = mid * self.w[n]
+        # Accumulate error to be passed back in the chain --rule--
+        self.partial_s = self.s * (1 - self.s)
+        self.e = acc_error * self.partial_s * self.w
 
-            # Calculate the gradient descent
-            self.delta_w[n] = -lr * mid * self.x[n]
+        # Gradient descent
+        self.delta_w = -lr * acc_error * self.partial_s * self.x
 
-            # Finally update the weight
-            self.w[n] = self.w[n] + self.delta_w[n]
+    def update_weights(self):
+        """Update weights for the layer."""
+        if (self.delta_w == np.zeros(self.dim)).all():
+            raise ValueError('Delta_w is not computed yet')
+        self.w = self.w + self.delta_w
 
 
 class Gateway(Layer):

@@ -100,6 +100,13 @@ class Gateway(Layer):
         self.z = (self.x * self.w).sum(axis=1)
         self.s = super().solve_fwd()
 
+    def solve_bwd(self, acc_error, lr=1):
+        """Compute the layer values in the backward pass."""
+        self.partial_s = self.s * (1 - self.s)
+        delta0 = -lr * self.partial_s * acc_error
+        delta0 = np.repeat(delta0, self.x.shape[1]).reshape(self.x.shape)
+        self.delta_w = delta0 * self.x
+        return self.delta_w
 
 
 class Output(Layer):

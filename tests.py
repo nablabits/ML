@@ -193,6 +193,15 @@ class TestGateway(unittest.TestCase):
         layer = Gateway(np.array([1, 2]))
         self.assertEqual(len(layer.s), layer.dim)
 
+    def test_gateway_partial_s(self):
+        layer = Gateway(np.array([1, 2]))
+        layer.solve_bwd(np.repeat(1, 3))
+
+    def test_delta_w_dimension_matches_w_dimension(self):
+        layer = Gateway(np.array([1, 2]))
+        delta_w = layer.solve_bwd(np.repeat(1, 3))
+        self.assertTrue(delta_w.shape == layer.w.shape)
+
 
 class TestOutputLayer(unittest.TestCase):
     """Test the special output layer."""

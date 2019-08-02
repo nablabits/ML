@@ -95,17 +95,11 @@ class Gateway(Layer):
     def __init__(self, x):
         """Set up a gateway layer."""
         super().__init__(x, layer_type='gateway')
-        self.x = self._clone_x()
+        self.x = np.tile(x, [self.dim, 1])  # clone input to match neurons
         self.w = 2 * np.random.random_sample((self.dim, len(x))) - 1
         self.z = (self.x * self.w).sum(axis=1)
         self.s = super().solve_fwd()
 
-    def _clone_x(self):
-        """Clone the input for the gateway layer."""
-        x0 = self.x  # keep the initial vector to clone it recursively.
-        for i in range(self.dim - 1):
-            self.x = np.concatenate((self.x, x0))
-        return self.x.reshape((self.dim, len(x0)))
 
 
 class Output(Layer):

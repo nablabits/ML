@@ -102,6 +102,13 @@ class Gateway(Layer):
 
     def solve_bwd(self, acc_error, lr=1):
         """Compute the layer values in the backward pass."""
+        # check args
+        super().not_np(
+            acc_error, 'The accumulated error should be a numpy array')
+        if not isinstance(lr, int):
+            raise TypeError('Learning rate should be an integer')
+
+        # Now compute it
         self.partial_s = self.s * (1 - self.s)
         delta0 = -lr * self.partial_s * acc_error
         delta0 = np.repeat(delta0, self.x.shape[1]).reshape(self.x.shape)

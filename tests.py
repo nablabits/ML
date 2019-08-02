@@ -193,6 +193,18 @@ class TestGateway(unittest.TestCase):
         layer = Gateway(np.array([1, 2]))
         self.assertEqual(len(layer.s), layer.dim)
 
+    def test_gateway_solve_bwd_check_args_np(self):
+        layer = Gateway(np.array([1, 2]))
+        regex = 'The accumulated error should be a numpy array'
+        with self.assertRaisesRegex(TypeError, regex):
+            layer.solve_bwd('void')
+
+    def test_gateway_solve_bwd_check_args_learning_rate(self):
+        layer = Gateway(np.array([1, 2]))
+        regex = 'Learning rate should be an integer'
+        with self.assertRaisesRegex(TypeError, regex):
+            layer.solve_bwd(np.zeros(3), 'str')
+
     def test_gateway_partial_s(self):
         layer = Gateway(np.array([1, 2]))
         layer.solve_bwd(np.repeat(1, 3))

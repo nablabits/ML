@@ -129,4 +129,25 @@ class Output(Layer):
         self.z = np.dot(x, self.w)
         self.s = super().solve_fwd()
 
+    def solve_bwd(self, net_error, lr=1):
+        """Compute the layer values in the backward pass."""
+        # check args
+        super().not_np(
+            net_error, 'The network error should be a numpy array')
+        if net_error.shape != (1, ):
+            raise ValueError('The shape for net error should be 1')
+        if not isinstance(lr, int):
+            raise TypeError('Learning rate should be an integer')
+
+        # Now, solve partial s and replicate to match weights & inputs
+        partial_s = self.s * (1 - self.s)
+        self.partial_s = np.repeat(partial_s, self.x.shape[0])
+        net_error = np.repeat(net_error, self.x.shape[0])
+
+        # Accumulate error to be passed back in the chain --rule--
+        self.e = -lr * net_error * self.partial_s * self.w
+
+        # Gradient descent
+        self.delta_w = -lr * net_error * self.partial_s * self.x
+
 

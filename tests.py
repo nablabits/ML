@@ -230,3 +230,44 @@ class TestOutputLayer(unittest.TestCase):
         layer = Output(np.array([1, 2, 3]))
         self.assertEqual(layer.s.size, 1)
 
+    def test_output_solve_bwd_check_args_np(self):
+        layer = Output(np.array([1, 2]))
+        regex = 'The network error should be a numpy array'
+        with self.assertRaisesRegex(TypeError, regex):
+            layer.solve_bwd('void')
+
+    def test_output_solve_bwd_check_args_shape(self):
+        layer = Output(np.array([1, 2]))
+        regex = 'The shape for net error should be 1'
+        with self.assertRaisesRegex(ValueError, regex):
+            layer.solve_bwd(np.array([1, 2]))
+
+    def test_output_solve_bwd_check_args_learning_rate(self):
+        layer = Output(np.array([1, 2]))
+        regex = 'Learning rate should be an integer'
+        with self.assertRaisesRegex(TypeError, regex):
+            layer.solve_bwd(np.zeros(1), 'str')
+
+    def test_output_partial_s(self):
+        x = np.array([1, 2, 3])
+        layer = Output(x)
+        layer.solve_bwd(np.array([0.5, ]))
+        partial_s = layer.s * (1 - layer.s)
+        self.assertTrue((layer.partial_s == partial_s).all())
+        self.assertEqual(layer.partial_s.shape, x.shape)
+
+    def test_output_acc_error_to_be_passed_back_in_the_chain(self):
+        x, err, lr = np.array([1, 2, 3]), np.array([0.5, ]), 3
+        layer = Output(x)
+        layer.solve_bwd(err, lr)
+        expected = -lr * np.repeat(err, x.shape[0]) * layer.partial_s * layer.w
+        self.assertTrue((expected == layer.e).all())
+
+    def test_output_gradient_descent(self):
+        x, err, lr = np.array([1, 2, 3]), np.array([0.5, ]), 3
+        layer = Output(x)
+        layer.solve_bwd(err, lr)
+        expected = -lr * np.repeat(err, x.shape[0]) * layer.partial_s * layer.x
+        self.assertTrue((expected == layer.delta_w).all())
+
+

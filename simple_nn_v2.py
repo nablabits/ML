@@ -27,6 +27,9 @@ class Layer:
             raise ValueError(
                 'Only regular, gateway & output layer types are allowed.')
 
+        # Set layer name
+        self.name = None
+
         # Prepare inputs for the neuron
         self.dim = neurons
 
@@ -35,7 +38,6 @@ class Layer:
                 'In hidden layers input dimension should match neurons.')
 
         self.w = 2 * np.random.random_sample(len(x)) - 1
-        self.x = x
 
         """
         Values computed on forward & backward pass. These are:
@@ -45,11 +47,13 @@ class Layer:
         3) The delta (delta_w): the value that must be added to the weight to
            reduce the error (gradient descent).
         """
-        if layer_type == 'regular':
-            self.z = self.x * self.w
-            self.s = self.solve_fwd()
+        self.s = self.solve_fwd(x)
         self.e = np.zeros(neurons)
         self.delta_w = np.zeros(neurons)
+
+    def __str__(self):
+        """Return the custom name for the layer."""
+        return self.name
 
     @staticmethod
     def not_np(array, msg=None):
@@ -57,8 +61,14 @@ class Layer:
         if not isinstance(array, np.ndarray):
             raise TypeError(msg)
 
-    def solve_fwd(self):
+    def neuron_input(self):
+        """Define the input for activation function."""
+        return self.x * self.w
+
+    def solve_fwd(self, x):
         """Compute the regular layer values in the forward pass."""
+        self.x = x
+        self.z = self.neuron_input()
         return 1 / (1 + np.exp(-self.z))
 
     def solve_bwd(self, acc_error, lr=1):
@@ -80,8 +90,6 @@ class Layer:
 
     def update_weights(self):
         """Update weights for the layer."""
-        if (self.delta_w == np.zeros(self.dim)).all():
-            raise ValueError('Delta_w is not computed yet')
         self.w = self.w + self.delta_w
 
 

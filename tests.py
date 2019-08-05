@@ -31,6 +31,9 @@ class TestLayer(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, regex):
             Layer(i, layer_type='void')
 
+    def test_layer_name_is_set_to_none(self):
+        self.assertTrue(Layer(np.array([1, 2, 3])).name is None)
+
     def test_dim_is_the_number_of_neurons(self):
         i = np.array([1, 2, 3])
         layer = Layer(i)
@@ -53,6 +56,11 @@ class TestLayer(unittest.TestCase):
     def test_auto_weights_are_smaller_than_one_in_regular_layers(self):
         layer = Layer(np.zeros(300), neurons=300)  # big enough
         self.assertTrue((layer.w < 1).all())
+
+    def test_solve_fwd_requires_one_argument(self):
+        layer = Layer(np.array([1, 2, 3]))
+        with self.assertRaises(TypeError):
+            layer.solve_fwd()
 
     def test_input_attribute_in_regular_layer(self):
         layer = Layer(np.array([1, 2, 3]))
@@ -82,7 +90,12 @@ class TestLayer(unittest.TestCase):
         self.assertIsInstance(layer.delta_w, np.ndarray)
         self.assertTrue((layer.delta_w == 0).all())
 
-    def test_solve_bwd_requires_two_args(self):
+    def test_str_returns_name(self):
+        layer = Layer(np.zeros(3))
+        layer.name = 'test'
+        self.assertEqual(layer.__str__(), 'test')
+
+    def test_solve_bwd_requires_one_arg(self):
         layer = Layer(np.array([1, 1, 2]))
         regex = 'missing 1 required positional argument: \'acc_error\''
         with self.assertRaisesRegex(TypeError, regex):
@@ -140,12 +153,6 @@ class TestLayer(unittest.TestCase):
         layer = Layer(np.array([1, 1, 2]))
         layer.solve_bwd(np.zeros(3))
         self.assertEqual(len(layer.delta_w), layer.dim)
-
-    def test_update_weights_raises_error_when_delta_is_not_computed(self):
-        layer = Layer(np.array([1, 1, 2]))
-        regex = 'Delta_w is not computed yet'
-        with self.assertRaisesRegex(ValueError, regex):
-            layer.update_weights()
 
     def test_update_weights(self):
         layer = Layer(np.array([1, 1, 2]))

@@ -169,10 +169,6 @@ class TestGateway(unittest.TestCase):
     def test_gateway_is_a_Layer_subclass(self):
         self.assertIsInstance(Gateway(np.array([1, 2])), Layer)
 
-    def test_x_is_cloned_on_gateway_layer(self):
-        layer = Gateway(np.array([1, 2]))
-        self.assertTrue((layer.x == np.array([[1, 2], [1, 2], [1, 2]])).all())
-
     def test_auto_weigths_are_reshaped_on_gateway_layer(self):
         layer = Gateway(np.array([1, 2]))
         self.assertEqual(layer.w.shape, (3, 2))
@@ -185,6 +181,10 @@ class TestGateway(unittest.TestCase):
         layer = Gateway(np.zeros(300))  # big enough
         self.assertTrue((layer.w < 1).all())
 
+    def test_x_is_cloned_on_gateway_layer(self):
+        layer = Gateway(np.array([1, 2]))
+        self.assertTrue((layer.x == np.array([[1, 2], [1, 2], [1, 2]])).all())
+
     def test_z_is_a_dot_product_element_wise_between_input_and_weight(self):
         i = np.array([1, 2])
         layer = Gateway(i)
@@ -193,7 +193,7 @@ class TestGateway(unittest.TestCase):
 
     def test_output_for_gateway_layer(self):
         layer = Gateway(np.array([1, 2]))
-        expected = 1 / (1 + np.exp(-(layer.x * layer.w).sum(axis=1)))
+        expected = 1 / (1 + np.exp(-layer.z))
         self.assertTrue((layer.s == expected).all())
 
     def test_output_for_gateway_layer_matches_dim(self):

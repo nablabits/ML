@@ -100,13 +100,23 @@ class Gateway(Layer):
     receives a copy of them. It also creates the weights accordingly.
     """
 
-    def __init__(self, x):
+    def __init__(self, x, neurons=3):
         """Set up a gateway layer."""
-        super().__init__(x, layer_type='gateway')
-        self.x = np.tile(x, [self.dim, 1])  # clone input to match neurons
+        super().__init__(x, neurons=neurons, layer_type='gateway')
+
+        # now redefine the terms to this special layer
         self.w = 2 * np.random.random_sample((self.dim, len(x))) - 1
-        self.z = (self.x * self.w).sum(axis=1)
-        self.s = super().solve_fwd()
+        self.s = self.solve_fwd(x)
+
+    def neuron_input(self):
+        """Define the input for activation function."""
+        return (self.x * self.w).sum(axis=1)
+
+    def solve_fwd(self, x):
+        """Compute the regular layer values in the forward pass."""
+        self.x = np.tile(x, [self.dim, 1])  # clone input to match neurons
+        self.z = self.neuron_input()
+        return 1 / (1 + np.exp(-self.z))
 
     def solve_bwd(self, acc_error, lr=1):
         """Compute the layer values in the backward pass."""

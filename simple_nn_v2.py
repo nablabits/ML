@@ -143,9 +143,21 @@ class Output(Layer):
 
     def __init__(self, x):
         """Set up a output layer."""
+        # first call the base layer
         super().__init__(x, neurons=1, layer_type='output')
-        self.z = np.dot(x, self.w)
-        self.s = super().solve_fwd()
+
+        # now redefine the terms to this special layer
+        self.s = self.solve_fwd(x)
+
+    def neuron_input(self):
+        """Define the input for activation function."""
+        return np.dot(self.x, self.w)
+
+    def solve_fwd(self, x):
+        """Compute the regular layer values in the forward pass."""
+        self.x = x
+        self.z = self.neuron_input()
+        return 1 / (1 + np.exp(-self.z))
 
     def solve_bwd(self, net_error, lr=1):
         """Compute the layer values in the backward pass."""

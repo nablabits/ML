@@ -228,6 +228,15 @@ class TestOutputLayer(unittest.TestCase):
     def test_output_is_a_Layer_subclass(self):
         self.assertIsInstance(Output(np.array([1, 2])), Layer)
 
+    def test_output_requires_an_arg(self):
+        with self.assertRaises(TypeError):
+            Output()
+
+    def test_layer_x_is_input(self):
+        i = np.array([1, 2, 3])
+        layer = Output(i)
+        self.assertTrue((layer.x == i).all())
+
     def test_z_is_a_dot_product_between_the_input_and_weight(self):
         i = np.array([1, 2, 3])
         layer = Output(i)
@@ -236,6 +245,11 @@ class TestOutputLayer(unittest.TestCase):
     def test_output_for_output_layer_is_one(self):
         layer = Output(np.array([1, 2, 3]))
         self.assertEqual(layer.s.size, 1)
+
+    def test_output_value(self):
+        layer = Output(np.array([1, 2, 3]))
+        expected = 1 / (1 + np.exp(-layer.z))
+        self.assertTrue((layer.s == expected).all())
 
     def test_output_solve_bwd_check_args_np(self):
         layer = Output(np.array([1, 2]))

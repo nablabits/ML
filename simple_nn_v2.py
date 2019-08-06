@@ -78,9 +78,6 @@ class Layer:
         if len(acc_error) != self.dim:
             raise ValueError('The accumulated error dimension doesn\'t match!')
 
-        if not isinstance(lr, int):
-            raise TypeError('Learning rate should be an integer')
-
         # Accumulate error to be passed back in the chain --rule--
         self.partial_s = self.s * (1 - self.s)
         self.e = acc_error * self.partial_s * self.w
@@ -123,8 +120,6 @@ class Gateway(Layer):
         # check args
         super().not_np(
             acc_error, 'The accumulated error should be a numpy array')
-        if not isinstance(lr, int):
-            raise TypeError('Learning rate should be an integer')
 
         # Now compute it
         self.partial_s = self.s * (1 - self.s)
@@ -166,8 +161,6 @@ class Output(Layer):
             net_error, 'The network error should be a numpy array')
         if net_error.shape != (1, ):
             raise ValueError('The shape for net error should be 1')
-        if not isinstance(lr, int):
-            raise TypeError('Learning rate should be an integer')
 
         # Now, solve partial s and replicate to match weights & inputs
         partial_s = self.s * (1 - self.s)

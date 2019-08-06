@@ -113,12 +113,6 @@ class TestLayer(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, regex):
             layer.solve_bwd(np.zeros(5))
 
-    def test_solve_bwd_lr_is_int(self):
-        layer = Layer(np.array([1, 1, 2]))
-        regex = 'Learning rate should be an integer'
-        with self.assertRaisesRegex(TypeError, regex):
-            layer.solve_bwd(np.zeros(3), 'str')
-
     def test_partial_s_is_the_derivative_of_sigmoid_function(self):
         layer = Layer(np.array([1, 1, 2]))
         part_s = layer.s * (1 - layer.s)
@@ -206,12 +200,6 @@ class TestGateway(unittest.TestCase):
         with self.assertRaisesRegex(TypeError, regex):
             layer.solve_bwd('void')
 
-    def test_gateway_solve_bwd_check_args_learning_rate(self):
-        layer = Gateway(np.array([1, 2]))
-        regex = 'Learning rate should be an integer'
-        with self.assertRaisesRegex(TypeError, regex):
-            layer.solve_bwd(np.zeros(3), 'str')
-
     def test_gateway_partial_s(self):
         layer = Gateway(np.array([1, 2]))
         layer.solve_bwd(np.repeat(1, 3))
@@ -262,12 +250,6 @@ class TestOutputLayer(unittest.TestCase):
         regex = 'The shape for net error should be 1'
         with self.assertRaisesRegex(ValueError, regex):
             layer.solve_bwd(np.array([1, 2]))
-
-    def test_output_solve_bwd_check_args_learning_rate(self):
-        layer = Output(np.array([1, 2]))
-        regex = 'Learning rate should be an integer'
-        with self.assertRaisesRegex(TypeError, regex):
-            layer.solve_bwd(np.zeros(1), 'str')
 
     def test_output_partial_s(self):
         x = np.array([1, 2, 3])

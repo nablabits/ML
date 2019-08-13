@@ -252,11 +252,9 @@ class Network:
         val = self.i[0] | self.i[1]
         return np.array([val, ])
 
-    def least_squares(self, dsp=False):
+    def least_squares(self):
         """Compute the error for the network."""
         sq_error = 0.5 * (self.y_hat - self.Op)**2
-        if dsp:
-            print(sq_error, )
         return sq_error
 
     def partial_e(self):
@@ -280,20 +278,20 @@ class Network:
             acc_error = layer.e
             layer.update_weights()
 
-    def train(self, cycles=100, dsp=False):
+    def train(self, cycles=100):
         """Train the network."""
         # Start out performing a backprop to start the cycles on fwd pass
         self.backprop()
 
         for cycle in range(cycles):
             self.fwd()
-            self.E = self.least_squares(dsp=dsp)  # update error
+            self.E = self.least_squares()  # update error
             self.backprop()
 
 
 if __name__ == '__main__':
     nt = Network()
-    nt.train(cycles=20000, dsp=True)
+    nt.train(cycles=2000)
 #
 #
 #

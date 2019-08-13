@@ -178,3 +178,127 @@ class Output(Layer):
         self.delta_w = -lr * common * self.x
 
 
+class Network:
+    """Create a new neural network."""
+
+    def __init__(self, layers=1, neurons=3):
+        """Set up the network.
+
+        Builds the first forward pass leaving it prepared for the backprop pass
+        just where the trainig starts out.
+
+        Layers arg stands for hidden layers (excluding gateway & output ones).
+
+        Notice that, for the sake of simplicity, neurons are connected one to
+        one across hidden layers which, therefore, must have the same number
+        of neurons.
+        """
+        # check args
+        if not isinstance(layers, int):
+            raise TypeError('Layers should be an int.')
+        if not isinstance(neurons, int):
+            raise TypeError('Neurons should be an int.')
+        if layers < 1:
+            raise ValueError('Layers value should be greater than one.')
+        if neurons < 3:
+            raise ValueError('Inner layer must have more than 2 neurons.')
+
+        # Initial pass #
+        ################
+
+        # First, generate the input & expected value
+        self.i = self._gen_input()
+        self.y_hat = self.expected()
+
+        self.layer_track = list()  # Track the layers
+
+        # Now create the network, first the gateway
+        gtway = Gateway(self.i, neurons=neurons)
+        gtway.name = 'gateway'
+        self.layer_track.append(gtway)
+
+        # now the hidden layers
+        x, n = gtway.s, 1
+        for i in range(layers):
+            layer = Layer(x, neurons=neurons)
+            layer.name = str('hidden_%s' % n)
+            self.layer_track.append(layer)
+            x = layer.s
+            n += 1
+
+        # Process output layer
+        self.output = Output(x)
+        self.output.name = 'output'
+        self.layer_track.append(self.output)
+
+        # Network outcome
+        self.Op = np.array([self.output.s, ])
+        self.E = self.least_squares()
+
+    @staticmethod
+    def _gen_input():
+        """Generate a random input to be used."""
+        a, b = np.random.randint(0, 2), np.random.randint(0, 2)
+        return np.array([a, b])
+
+    def expected(self):
+        """Compute the expected result for the network."""
+        if not isinstance(self.i, np.ndarray):
+            raise TypeError('A numpy ndarray was expected.')
+        if len(self.i) != 2:
+            raise ValueError('The length should be 2.')
+        if not ((self.i == 0) | (self.i == 1)).all():
+            raise ValueError('The values should be either 0 or 1')
+        val = self.i[0] | self.i[1]
+        return np.array([val, ])
+
+    def least_squares(self, dsp=False):
+        """Compute the error for the network."""
+        sq_error = 0.5 * (self.y_hat - self.Op)**2
+        if dsp:
+            print(sq_error, )
+        return sq_error
+
+    def partial_e(self):
+        """Compute the error with respect to last layer output."""
+        return (self.Op - self.y_hat)
+
+    def fwd(self):
+        """Perform the forward pass in the training."""
+        self.i = self._gen_input()
+        self.y_hat = self.expected()
+        x = self.i
+        for layer in self.layer_track:
+            x = layer.solve_fwd(x)
+        self.Op = np.array([x, ])
+
+    def backprop(self, lr=10):
+        """Perform the backpropagation pass."""
+        acc_error = self.partial_e()
+        for layer in self.layer_track[::-1]:
+            layer.solve_bwd(acc_error, lr=lr)
+            acc_error = layer.e
+            layer.update_weights()
+
+    def train(self, cycles=100, dsp=False):
+        """Train the network."""
+        # Start out performing a backprop to start the cycles on fwd pass
+        self.backprop()
+
+        for cycle in range(cycles):
+            self.fwd()
+            self.E = self.least_squares(dsp=dsp)  # update error
+            self.backprop()
+
+
+if __name__ == '__main__':
+    nt = Network()
+    nt.train(cycles=20000, dsp=True)
+#
+#
+#
+#
+#
+#
+#
+#

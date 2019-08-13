@@ -280,3 +280,218 @@ class TestOutputLayer(unittest.TestCase):
         self.assertTrue((expected == layer.delta_w).all())
 
 
+class NetworkTests(unittest.TestCase):
+    """Test the network class."""
+
+    def test_layers_type(self):
+        regex = 'Layers should be an int.'
+        with self.assertRaisesRegex(TypeError, regex):
+            Network(layers='a')
+
+    def test_neurons_type(self):
+        regex = 'Neurons should be an int.'
+        with self.assertRaisesRegex(TypeError, regex):
+            Network(neurons='void')
+
+    def test_layers_value(self):
+        regex = 'Layers value should be greater than one.'
+        with self.assertRaisesRegex(ValueError, regex):
+            Network(layers=0)
+
+    def test_neurons_value(self):
+        regex = 'Inner layer must have more than 2 neurons.'
+        with self.assertRaisesRegex(ValueError, regex):
+            Network(neurons=2)
+
+    def test_network_gen_input_is_ndarray(self):
+        nt = Network()
+        self.assertIsInstance(nt.i, np.ndarray)
+
+    def test_gen_input_output_values_either_0_or_1(self):
+        for _ in range(500):  # Big enough
+            ndarray = Network._gen_input()
+            self.assertTrue(((ndarray == 0) | (ndarray == 1)).all())
+
+    def test_expected_requires_ndarray_for_i(self):
+        nt = Network()
+        nt.i = 'void'
+        regex = 'A numpy ndarray was expected.'
+        with self.assertRaisesRegex(TypeError, regex):
+            nt.expected()
+
+    def test_expected_requires_ndarray_len_2_for_i(self):
+        nt = Network()
+        nt.i = np.array([1, 2, 3, ])
+        regex = 'The length should be 2.'
+        with self.assertRaisesRegex(ValueError, regex):
+            nt.expected()
+
+    def test_expected_requires_ndarray_with_0s_or_1s_for_i(self):
+        nt = Network()
+        nt.i = np.array([1, 2, ])
+        regex = 'The values should be either 0 or 1'
+        with self.assertRaisesRegex(ValueError, regex):
+            nt.expected()
+
+    def test_expected_returns_logic_or(self):
+        nt = Network()
+        nt.i = np.array([0, 0])
+        self.assertEqual(nt.expected(), 0)
+        nt.i = np.array([1, 0])
+        self.assertEqual(nt.expected(), 1)
+        nt.i = np.array([0, 1])
+        self.assertEqual(nt.expected(), 1)
+        nt.i = np.array([1, 1])
+        self.assertEqual(nt.expected(), 1)
+
+    def test_layer_track_is_a_list_of_layer_objects(self):
+        nt = Network(layers=5)
+        for layer in nt.layer_track:
+            self.assertIsInstance(layer, Layer)
+
+        # Five hidden layers + gateway + output
+        self.assertEqual(len(nt.layer_track), 7)
+
+    def test_layer_names(self):
+        nt = Network(layers=2)
+        ly = nt.layer_track
+        self.assertEqual(ly[0].__str__(), 'gateway')
+        self.assertEqual(ly[1].__str__(), 'hidden_1')
+        self.assertEqual(ly[2].__str__(), 'hidden_2')
+        self.assertEqual(ly[3].__str__(), 'output')
+
+    def test_layer_input_is_previous_layer_output(self):
+        nt = Network(layers=2)
+        ly = nt.layer_track
+        self.assertTrue((ly[0].x == nt.i).all())
+        for i in range(2):
+            self.assertTrue((ly[i+1].x == ly[i].s).all())
+
+    def test_network_output_should_be_a_ndarray_len_one(self):
+        nt = Network()
+        self.assertIsInstance(nt.Op, np.ndarray)
+        self.assertEqual(len(nt.Op), 1)
+
+    def test_network_output_limits(self):
+        for _ in range(100):
+            nt = Network(layers=5)
+            self.assertLess(nt.Op, 1)
+            self.assertGreater(nt.Op, -1)
+
+    def test_error_output_limits(self):
+        for _ in range(100):
+            nt = Network(layers=5, neurons=5)
+            self.assertLessEqual(nt.E, 2)
+            self.assertGreaterEqual(nt.E, 0)
+
+    def test_a_whole_cycle(self):
+        """
+        Although individual tests have been written, test all together to stick
+        knowledge and ensure everything is working as expected.
+        """
+
+        nt = Network(layers=1, neurons=3)
+        gt, hd, op = nt.layer_track
+
+        # Gateway, forward pass
+        self.assertTrue((gt.x == np.tile(nt.i, [3, 1])).all())
+        self.assertTrue(gt.x.shape == (3, 2))
+        self.assertTrue(gt.w.shape == (3, 2))
+        self.assertTrue((gt.z == (gt.x * gt.w).sum(axis=1)).all())
+        self.assertTrue((gt.s == 1 / (1 + np.exp(-gt.z))).all())
+
+        # Hidden, forward pass
+        self.assertTrue((hd.x == gt.s).all())
+        self.assertTrue(hd.x.shape == (3, ))
+        self.assertTrue((hd.z == (hd.x * hd.w)).all())
+        self.assertTrue((hd.s == 1 / (1 + np.exp(-hd.z))).all())
+
+        # Output forward pass
+        self.assertTrue((op.x == hd.s).all())
+        self.assertTrue(op.x.shape == (3, ))
+        self.assertTrue((op.z == np.dot(op.x, op.w)).all())
+        self.assertTrue((op.s == 1 / (1 + np.exp(-op.z))).all())
+        self.assertIsInstance(op.s, np.float64)
+
+        # Network outcome
+        self.assertTrue(nt.Op.shape == (1, ))
+        self.assertTrue((nt.Op == op.s).all())
+        self.assertTrue((nt.E == (.5 * (nt.y_hat - nt.Op)**2)))
+
+        # Start backpropagation
+        gtw0, hdw0, opw0 = gt.w, hd.w, op.w  # Keep original weights
+        del_E = nt.partial_e()
+        self.assertTrue((del_E == nt.Op - nt.y_hat).all())
+        self.assertTrue(del_E.shape == (1, ))
+        nt.backprop(lr=1)
+
+        # Output backprop, partial output with respect to input
+        comp = op.s * (1 - op.s)
+        partial_s = np.array([comp, comp, comp])
+        self.assertTrue((op.partial_s == partial_s).all())
+        self.assertEqual(op.partial_s.shape, (3, ))
+
+        # Output backprop, error passed back in the chain
+        net_error = np.array([del_E, del_E, del_E])
+        expected = net_error * partial_s * opw0
+        self.assertTrue((op.e == expected).all())
+        self.assertEqual(op.e.shape, (3, ))
+
+        # Output backprop, delta for weights
+        expected = -1 * net_error * partial_s * op.x
+        self.assertTrue((op.delta_w == expected).all())
+        self.assertEqual(op.delta_w.shape, (3, ))
+
+        # Output backprop, update weights
+        self.assertTrue((op.w == opw0 + expected).all())
+        self.assertEqual(op.w.shape, (3, ))
+
+        # Hidden backprop, partial output w/ respect to input
+        self.assertTrue((hd.partial_s == hd.s * (1 - hd.s)).all())
+        self.assertEqual(hd.partial_s.shape, (3, ))
+
+        # Hidden backprop, error passed back in the chain
+        self.assertTrue((hd.e == op.e * hd.partial_s * hdw0).all())
+        self.assertEqual(hd.e.shape, (3, ))
+
+        # Hidden backprop, delta for weights
+        self.assertTrue((hd.delta_w == -1 * op.e * hd.partial_s * hd.x).all())
+        self.assertEqual(hd.delta_w.shape, (3, ))
+
+        # Hidden backprop, update weights
+        self.assertTrue((hd.w == hdw0 + hd.delta_w).all())
+        self.assertEqual(hd.w.shape, (3, ))
+
+        # Gateway backprop, patial output with respect to the input
+        self.assertTrue((gt.partial_s == gt.s * (1 - gt.s)).all())
+        self.assertEqual(gt.partial_s.shape, (3, ))
+
+        # Gateway backprop, clone partial_s & acc error to match weights
+        delta0 = -1 * gt.partial_s * hd.e
+        delta_w = np.array(
+            [[delta0[0], delta0[0]],
+             [delta0[1], delta0[1]],
+             [delta0[2], delta0[2]]])
+        self.assertEqual(delta_w.shape, gt.x.shape)
+
+        # Gateway backprop, calculate delta for weights
+        self.assertTrue((gt.delta_w == delta_w * gt.x).all())
+        self.assertEqual(gt.delta_w.shape, (3, 2))
+
+        # Gateway backprop, update weights
+        self.assertTrue((gt.w == gtw0 + gt.delta_w).all())
+        self.assertEqual(gt.w.shape, (3, 2))
+
+    def test_least_squares(self):
+        nt = Network()
+        nt.y_hat, nt.Op = 5, 2
+        self.assertTrue((nt.least_squares() == 4.5))
+
+    def test_backprop_partial_e_value(self):
+        nt = Network()
+        nt.y_hat, nt.Op = 5, 2
+        self.assertTrue((nt.partial_e() == -3))
+
+
+if __name__ == '__main__':
+    unittest.main()

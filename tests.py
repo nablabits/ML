@@ -263,8 +263,14 @@ class TestOutputLayer(unittest.TestCase):
         x, err, lr = np.array([1, 2, 3]), np.array([0.5, ]), 3
         layer = Output(x)
         layer.solve_bwd(err, lr)
-        expected = -lr * np.repeat(err, x.shape[0]) * layer.partial_s * layer.w
+        expected = np.repeat(err, x.shape[0]) * layer.partial_s * layer.w
         self.assertTrue((expected == layer.e).all())
+
+    def test_output_error_passed_back_in_the_chain_matches_input_dim(self):
+        x, err, lr = np.array([1, 2, 3]), np.array([0.5, ]), 3
+        layer = Output(x)
+        layer.solve_bwd(err, lr)
+        self.assertEqual(layer.e.shape, layer.x.shape)
 
     def test_output_gradient_descent(self):
         x, err, lr = np.array([1, 2, 3]), np.array([0.5, ]), 3

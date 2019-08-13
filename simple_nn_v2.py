@@ -101,7 +101,7 @@ class Gateway(Layer):
         """Set up a gateway layer."""
         super().__init__(x, neurons=neurons, layer_type='gateway')
 
-        # now redefine the terms to this special layer
+        # now redefine the attr for this special layer
         self.w = 2 * np.random.random_sample((self.dim, len(x))) - 1
         self.s = self.solve_fwd(x)
 
@@ -111,6 +111,9 @@ class Gateway(Layer):
 
     def solve_fwd(self, x):
         """Compute the regular layer values in the forward pass."""
+        # check args
+        super().not_np(
+            x, 'The input should be a numpy array')
         self.x = np.tile(x, [self.dim, 1])  # clone input to match neurons
         self.z = self.neuron_input()
         return 1 / (1 + np.exp(-self.z))
@@ -168,9 +171,10 @@ class Output(Layer):
         net_error = np.repeat(net_error, self.x.shape[0])
 
         # Accumulate error to be passed back in the chain --rule--
-        self.e = -lr * net_error * self.partial_s * self.w
+        common = net_error * self.partial_s
+        self.e = common * self.w
 
         # Gradient descent
-        self.delta_w = -lr * net_error * self.partial_s * self.x
+        self.delta_w = -lr * common * self.x
 
 

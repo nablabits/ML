@@ -181,7 +181,7 @@ class Output(Layer):
 class Network:
     """Create a new neural network."""
 
-    def __init__(self, layers=1, neurons=3):
+    def __init__(self, layers=1, neurons=3, lr=1, cli=False):
         """Set up the network.
 
         Builds the first forward pass leaving it prepared for the backprop pass
@@ -193,6 +193,8 @@ class Network:
         one across hidden layers which, therefore, must have the same number
         of neurons.
         """
+        if cli:
+            print('Starting Network...')
         # check args
         if not isinstance(layers, int):
             raise TypeError('Layers should be an int.')
@@ -235,6 +237,11 @@ class Network:
         self.Op = np.array([self.output.s, ])
         self.E = self.least_squares()
 
+        self.train_loss = np.array([self.E, ])
+
+        # add learning rate attribute
+        self.lr = lr
+
     @staticmethod
     def _gen_input():
         """Generate a random input to be used."""
@@ -261,37 +268,71 @@ class Network:
         """Compute the error with respect to last layer output."""
         return (self.Op - self.y_hat)
 
-    def fwd(self):
+    def fwd(self, i=None):
         """Perform the forward pass in the training."""
-        self.i = self._gen_input()
+        if i is None:
+            self.i = self._gen_input()
+        else:
+            self.i = i
         self.y_hat = self.expected()
         x = self.i
         for layer in self.layer_track:
             x = layer.solve_fwd(x)
         self.Op = np.array([x, ])
 
-    def backprop(self, lr=10):
+    def backprop(self):
         """Perform the backpropagation pass."""
         acc_error = self.partial_e()
         for layer in self.layer_track[::-1]:
-            layer.solve_bwd(acc_error, lr=lr)
+            layer.solve_bwd(acc_error, lr=self.lr)
             acc_error = layer.e
             layer.update_weights()
 
-    def train(self, cycles=100):
+    def train(self, cycles=100, epochs=20, cli=False):
         """Train the network."""
+        if cli:
+            print('Training...', end='')
+        # store some useful values for outcome
+        self.cycles, self.epochs = cycles, epochs
+
         # Start out performing a backprop to start the cycles on fwd pass
         self.backprop()
 
-        for cycle in range(cycles):
+        for cycle in range(cycles * epochs):
             self.fwd()
             self.E = self.least_squares()  # update error
+            self.train_loss = np.append(self.train_loss, [self.E, ])
             self.backprop()
+        print('done')
+
+    def outcome(self):
+        """Print some outcomes for the training."""
+        print('\nNETWORK OUTCOME')
+        print(20 * '#' + '\n')
+        print(('-> Built a Neural network with {} layers having the inner ' +
+              'layer {} neurons').format(
+                len(self.layer_track), self.layer_track[1].dim))
+        print('-> After {} epoch(s) of {} cycles per epoch:'.format(
+            self.epochs, self.cycles))
+        for n, layer in enumerate(self.layer_track):
+            print('-> Layer {} final weights are:\n {}'.format(n, layer.w))
+
+        print('Final error for the network (loss) is:', self.train_loss[-1])
+        print('[initial was: {}]'.format(self.train_loss[0]))
+
+        i = np.array([0, 0])
+        print('\nTesting the value {}|{} = {}'.format(
+            i[0], i[1], i[0] | i[1]
+        ))
+        nt.fwd(i=i)
+        print('Network result:', nt.Op)
 
 
 if __name__ == '__main__':
-    nt = Network()
-    nt.train(cycles=2000)
+    nt = Network(lr=5, layers=1, neurons=5, cli=True)
+    nt.train(cli=True)
+    nt.outcome()
+
 #
 #
 #

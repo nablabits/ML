@@ -423,7 +423,7 @@ class NetworkTests(unittest.TestCase):
         del_E = nt.partial_e()
         self.assertTrue((del_E == nt.Op - nt.y_hat).all())
         self.assertTrue(del_E.shape == (1, ))
-        nt.backprop(lr=1)
+        nt.backprop()
 
         # Output backprop, partial output with respect to input
         comp = op.s * (1 - op.s)

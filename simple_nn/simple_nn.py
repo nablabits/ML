@@ -87,7 +87,7 @@ def SetUp():
 
 
 class Train:
-    """Run the network forward to compute the outputs and the error."""
+    """Define a whole training cycle."""
 
     def __init__(self, df, learning_rate=1, cycles=100):
         """Require the weights df."""

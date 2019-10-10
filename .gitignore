@@ -4,3 +4,4 @@ tries.ipynb
 __pycache__/
 htmlcov
 .coverage
+bcam/classification-0.ipynb

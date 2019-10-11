@@ -12,5 +12,8 @@ The following lines contain short descriptions for each of the projects (one for
 ### Simple NN
 This project is the implementation of a neural network that predicts the result of an `OR` operation between two elements, either 1 or 0.
 
+### BCAM
+During the 40th week of october I assisted to a 10h ML introductory course at the [Basque Center of Applied Mathematics](http://www.bcamath.org/en). Here's the content I collected so far.
+
 ## Installation
 As of Aug 20, 2019 since there's only one project everything gets done by simply installing the dependencies in the requirements file in a virtual environment an then running each project with the instructions found inside its README.

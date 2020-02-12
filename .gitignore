@@ -5,3 +5,5 @@ __pycache__/
 htmlcov
 .coverage
 bcam/classification-0.ipynb
+kaggle/titanic/bayes.csv
+kaggle/titanic/my_submission.csv

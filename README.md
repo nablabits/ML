@@ -4,7 +4,7 @@ This is the repository I created during my personal learning journey throughout 
 It's mainly designed for my personal use, however you might find it useful (and I'll be glad if you do!).
 
 ## Content
-As of Oct 21, 2020 there are several projects:
+As of Jul 21, 2020 there are several projects:
 
 ### Simple NN
 This project is the implementation of a neural network created form the scratch that predicts the result of an `OR` operation between two elements, either 1 or 0.
